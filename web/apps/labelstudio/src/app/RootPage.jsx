@@ -1,6 +1,7 @@
 import React from "react";
 import { Menubar } from "../components/Menubar/Menubar";
 import { ProjectRoutes } from "../routes/ProjectRoutes";
+import '@rainbow-me/rainbowkit/styles.css';
 
 export const RootPage = ({ content }) => {
   const pinned = localStorage.getItem("sidebar-pinned") === "true";

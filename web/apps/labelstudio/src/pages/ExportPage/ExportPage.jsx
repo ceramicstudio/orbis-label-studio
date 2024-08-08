@@ -8,6 +8,8 @@ import { useAPI } from "../../providers/ApiProvider";
 import { useFixedLocation, useParams } from "../../providers/RoutesProvider";
 import { BemWithSpecifiContext } from "../../utils/bem";
 import { isDefined } from "../../utils/helpers";
+import { OrbisDB } from "@useorbis/db-sdk";
+import { orbis } from "../../pages/Projects/Projects";
 import "./ExportPage.styl";
 
 // const formats = {
@@ -65,6 +67,10 @@ export const ExportPage = () => {
     if (response.ok) {
       const blob = await response.blob();
 
+      // convert to json
+      const json = await blob.text();
+      console.log(JSON.parse(json));
+
       downloadFile(blob, response.headers.get("filename"));
     } else {
       api.handleError(response);
@@ -75,7 +81,60 @@ export const ExportPage = () => {
     clearTimeout(message);
   };
 
+  const saveToCeramic = async () => {
+    setDownloading(true);
+    const message = setTimeout(() => {
+      setDownloadingMessage(true);
+    }, 1000);
+
+    const params = form.current.assembleFormData({
+      asJSON: true,
+      full: true,
+      booleansAsNumbers: true,
+    });
+
+    const response = await api.callApi("exportRaw", {
+      params: {
+        pk: pageParams.id,
+        ...params,
+      },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+
+      // convert to json
+      const json = await blob.text();
+      const rows = JSON.parse(json);
+      console.log(rows);
+
+      //save to Ceramic
+      await orbis.getConnectedUser();
+
+      for (const row of rows) {
+        // wait 500 ms
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const updatequery = await orbis
+          .insert(
+            process.env.TABLE_ID
+          )
+          .value(row)
+          .context(
+            process.env.CONTEXT_ID
+          )
+          .run();
+        console.log(updatequery);
+      }
+    } else {
+      api.handleError(response);
+    }
+    setDownloading(false);
+    setDownloadingMessage(false);
+    clearTimeout(message);
+  };
+
   useEffect(() => {
+
     if (isDefined(pageParams.id)) {
       api
         .callApi("previousExports", {
@@ -184,9 +243,25 @@ export const ExportPage = () => {
             <Elem name="recent">{/* {exportHistory} */}</Elem>
             <Elem name="actions">
               <Space>
-                {downloadingMessage && "Files are being prepared. It might take some time."}
-                <Elem tag={Button} name="finish" look="primary" onClick={proceedExport} waiting={downloading}>
+                {downloadingMessage &&
+                  "Files are being prepared. It might take some time."}
+                <Elem
+                  tag={Button}
+                  name="finish"
+                  look="primary"
+                  onClick={proceedExport}
+                  waiting={downloading}
+                >
                   Export
+                </Elem>
+                <Elem
+                  tag={Button}
+                  name="finish"
+                  look="secondary"
+                  onClick={saveToCeramic}
+                  waiting={downloading}
+                >
+                  Save to Ceramic
                 </Elem>
               </Space>
             </Elem>
@@ -200,7 +275,9 @@ export const ExportPage = () => {
 const FormatInfo = ({ availableFormats, selected, onClick }) => {
   return (
     <Block name="formats">
-      <Elem name="info">You can export dataset in one of the following formats:</Elem>
+      <Elem name="info">
+        You can export dataset in one of the following formats:
+      </Elem>
       <Elem name="list">
         {availableFormats.map((format) => (
           <Elem
@@ -224,7 +301,9 @@ const FormatInfo = ({ availableFormats, selected, onClick }) => {
               </Space>
             </Elem>
 
-            {format.description && <Elem name="description">{format.description}</Elem>}
+            {format.description && (
+              <Elem name="description">{format.description}</Elem>
+            )}
           </Elem>
         ))}
       </Elem>
@@ -232,7 +311,12 @@ const FormatInfo = ({ availableFormats, selected, onClick }) => {
         Can't find an export format?
         <br />
         Please let us know in{" "}
-        <a className="no-go" href="https://slack.labelstud.io/?source=product-export" target="_blank" rel="noreferrer">
+        <a
+          className="no-go"
+          href="https://slack.labelstud.io/?source=product-export"
+          target="_blank"
+          rel="noreferrer"
+        >
           Slack
         </a>{" "}
         or submit an issue to the{" "}

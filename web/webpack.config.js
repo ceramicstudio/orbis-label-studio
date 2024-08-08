@@ -3,11 +3,17 @@ const path = require("path");
 const { composePlugins, withNx } = require("@nx/webpack");
 const { withReact } = require("@nx/react");
 const { merge } = require("webpack-merge");
-
-require("dotenv").config();
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+const dotenv = require("dotenv");
+require("dotenv").config({path: '.env'});
 
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const { EnvironmentPlugin, DefinePlugin, ProgressPlugin, optimize } = require("webpack");
+const {
+  EnvironmentPlugin,
+  DefinePlugin,
+  ProgressPlugin,
+  optimize,
+} = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
@@ -32,9 +38,14 @@ const LOCAL_ENV = {
   RELEASE_NAME: RELEASE,
 };
 
-const devtool = process.env.NODE_ENV === "production" ? "source-map" : "cheap-module-source-map";
+const devtool =
+  process.env.NODE_ENV === "production"
+    ? "source-map"
+    : "cheap-module-source-map";
 
-const DEFAULT_NODE_ENV = process.env.BUILD_MODULE ? "production" : process.env.NODE_ENV || "development";
+const DEFAULT_NODE_ENV = process.env.BUILD_MODULE
+  ? "production"
+  : process.env.NODE_ENV || "development";
 const isDevelopment = DEFAULT_NODE_ENV !== "production";
 const customDistDir = !!process.env.WORK_DIR;
 
@@ -49,6 +60,7 @@ const dirPrefix = {
 
 const plugins = [
   new MiniCssExtractPlugin(),
+  new NodePolyfillPlugin(),
   new DefinePlugin({
     "process.env.CSS_PREFIX": JSON.stringify(css_prefix),
   }),
@@ -59,7 +71,7 @@ if (process.env.MODE !== "standalone") {
   plugins.push(
     new optimize.LimitChunkCountPlugin({
       maxChunks: 1,
-    }),
+    })
   );
 }
 
@@ -77,7 +89,7 @@ const optimizer = () => {
       }),
       new CssMinimizerPlugin({
         parallel: true,
-      }),
+      })
     );
   }
 
@@ -104,6 +116,12 @@ module.exports = composePlugins(
   (config) => {
     // Update the webpack config as needed here.
     // e.g. `config.plugins.push(new MyPlugin())`
+
+    const env = dotenv.config().parsed;
+    const envKeys = Object.keys(env).reduce((prev, next) => {
+      prev[`process.env.${next}`] = JSON.stringify(env[next]);
+      return prev;
+    }, {});
 
     config.output = {
       ...config.output,
@@ -137,7 +155,9 @@ module.exports = composePlugins(
       if (isScss) {
         rule.oneOf.forEach((loader) => {
           if (loader.use) {
-            const cssLoader = loader.use.find((use) => use.loader && use.loader.includes("css-loader"));
+            const cssLoader = loader.use.find(
+              (use) => use.loader && use.loader.includes("css-loader")
+            );
 
             if (cssLoader && cssLoader.options) {
               cssLoader.options.modules = {
@@ -163,15 +183,22 @@ module.exports = composePlugins(
           if (testString.match(/module/)) return false;
 
           // we only target pre-processors that has 'css-loader included'
-          return testString.match(/scss|sass|styl/) && r.use.some((u) => u.loader && u.loader.includes("css-loader"));
+          return (
+            testString.match(/scss|sass|styl/) &&
+            r.use.some((u) => u.loader && u.loader.includes("css-loader"))
+          );
         });
 
         r.forEach((_r) => {
-          const cssLoader = _r.use.find((use) => use.loader && use.loader.includes("css-loader"));
+          const cssLoader = _r.use.find(
+            (use) => use.loader && use.loader.includes("css-loader")
+          );
 
           if (!cssLoader) return;
 
-          const isSASS = _r.use.some((use) => use.loader && use.loader.match(/sass|scss/));
+          const isSASS = _r.use.some(
+            (use) => use.loader && use.loader.match(/sass|scss/)
+          );
 
           if (isSASS) _r.exclude = /node_modules/;
 
@@ -187,17 +214,28 @@ module.exports = composePlugins(
       }
 
       if (rule.test.toString().includes("styl")) {
-        const r = rule.oneOf.filter((r) => r.use && r.use.find((u) => u.loader && u.loader.includes("stylus-loader")));
+        const r = rule.oneOf.filter(
+          (r) =>
+            r.use &&
+            r.use.find((u) => u.loader && u.loader.includes("stylus-loader"))
+        );
 
         r.forEach((_r) => {
-          const l = _r.use.filter((u) => u.loader && u.loader.includes("stylus-loader"));
+          const l = _r.use.filter(
+            (u) => u.loader && u.loader.includes("stylus-loader")
+          );
 
           l.forEach((_l) => {
             _l.options = {
               ..._l.options,
               stylusOptions: {
                 ..._l.options.stylusOptions,
-                import: [path.resolve(__dirname, "apps/labelstudio/src/themes/default/variables.styl")],
+                import: [
+                  path.resolve(
+                    __dirname,
+                    "apps/labelstudio/src/themes/default/variables.styl"
+                  ),
+                ],
               },
             };
           });
@@ -232,15 +270,15 @@ module.exports = composePlugins(
           name: "[name].[ext]",
           outputPath: dirPrefix.js, // colocate wasm with js
         },
-      },
+      }
     );
 
     // update the stylus loader to include an import of a global file
     return merge(config, {
       devtool,
       mode: process.env.NODE_ENV || "development",
-      plugins,
+      plugins: [...plugins, new DefinePlugin(envKeys)],
       optimization: optimizer(),
     });
-  },
+  }
 );

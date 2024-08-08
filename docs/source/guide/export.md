@@ -136,6 +136,10 @@ Results are stored as comma-separated values with the column names specified by 
 
 List of items in [raw JSON format](#Label-Studio-JSON-format-of-annotated-tasks) stored in one JSON file. Use this format to export both the data and the annotations for a dataset. Supports all project types.
 
+### Save to Ceramic
+
+You can also save to Ceramic.
+
 ### JSON_MIN
 
 List of items where only `"from_name", "to_name"` values from the [raw JSON format](#Label-Studio-JSON-format-of-annotated-tasks) are exported. Use this format to export the annotations and the data for a dataset, and no Label-Studio-specific fields. Supports all project types.
