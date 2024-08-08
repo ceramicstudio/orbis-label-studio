@@ -14,27 +14,12 @@ import { DataManagerPage } from "../DataManager/DataManager";
 import { SettingsPage } from "../Settings";
 import "./Projects.styl";
 import { EmptyProjectsList, ProjectsList } from "./ProjectsList";
-import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
-import { OrbisDB } from "@useorbis/db-sdk";
-import { OrbisKeyDidAuth, OrbisEVMAuth } from "@useorbis/db-sdk/auth";
 
 const getCurrentPage = () => {
   const pageNumberFromURL = new URLSearchParams(location.search).get("page");
 
   return pageNumberFromURL ? Number.parseInt(pageNumberFromURL) : 1;
 };
-
-export const orbis = new OrbisDB({
-  ceramic: {
-    gateway: process.env.CERAMIC_GATEWAY,
-  },
-  nodes: [
-    {
-      gateway: process.env.ORBIS_GATEWAY,
-      env: process.env.ENV_ID
-    },
-  ],
-});
 
 export const ProjectsPage = () => {
   const api = React.useContext(ApiContext);
@@ -47,35 +32,10 @@ export const ProjectsPage = () => {
   const defaultPageSize = Number.parseInt(
     localStorage.getItem("pages:projects-list") ?? 30
   );
-  const { ready, authenticated, login, logout, createWallet, user } =
-    usePrivy();
-  const { wallets } = useWallets();
 
   const [modal, setModal] = React.useState(false);
   const openModal = setModal.bind(null, true);
   const closeModal = setModal.bind(null, false);
-
-  const createSession = async () => {
-    const session = localStorage.getItem("orbis:session");
-    if (!session && wallets[0]) {
-      const provider = await wallets[0].getEthereumProvider();
-      const auth = new OrbisEVMAuth(provider);
-      const authResult = await orbis.connectUser({
-        auth,
-      });
-      if (authResult.auth.session) {
-        console.log("Orbis Auth'd:", authResult.auth.session);
-        return authResult;
-      }
-    }
-  };
-
-  const create = async () => {
-    if (!user?.wallet?.address) {
-      await createWallet();
-    }
-    await createSession();
-  };
 
   const fetchProjects = async (
     page = currentPage,
@@ -154,13 +114,8 @@ export const ProjectsPage = () => {
   };
 
   React.useEffect(() => {
-    if (authenticated && ready) {
-      create();
-    } else if (!authenticated && ready) {
-      localStorage.removeItem("orbis:session");
-    }
     fetchProjects();
-  }, [authenticated, ready, wallets]);
+  }, []);
 
   React.useEffect(() => {
     // there is a nice page with Create button when list is empty

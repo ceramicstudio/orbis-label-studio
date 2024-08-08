@@ -9,7 +9,7 @@ import { useFixedLocation, useParams } from "../../providers/RoutesProvider";
 import { BemWithSpecifiContext } from "../../utils/bem";
 import { isDefined } from "../../utils/helpers";
 import { OrbisDB } from "@useorbis/db-sdk";
-import { orbis } from "../../pages/Projects/Projects";
+import { orbis } from "../../app/RootPage";
 import "./ExportPage.styl";
 
 // const formats = {
@@ -34,7 +34,7 @@ export const ExportPage = () => {
   const location = useFixedLocation();
   const pageParams = useParams();
   const api = useAPI();
-
+  const [hasSession, setHasSession] = useState(false);
   const [previousExports, setPreviousExports] = useState([]);
   const [downloading, setDownloading] = useState(false);
   const [downloadingMessage, setDownloadingMessage] = useState(false);
@@ -115,13 +115,9 @@ export const ExportPage = () => {
         // wait 500 ms
         await new Promise((resolve) => setTimeout(resolve, 500));
         const updatequery = await orbis
-          .insert(
-            process.env.TABLE_ID
-          )
+          .insert(process.env.TABLE_ID)
           .value(row)
-          .context(
-            process.env.CONTEXT_ID
-          )
+          .context(process.env.CONTEXT_ID)
           .run();
         console.log(updatequery);
       }
@@ -134,7 +130,9 @@ export const ExportPage = () => {
   };
 
   useEffect(() => {
-
+    if (localStorage.getItem("orbis:session")) {
+      setHasSession(true);
+    }
     if (isDefined(pageParams.id)) {
       api
         .callApi("previousExports", {
@@ -254,15 +252,17 @@ export const ExportPage = () => {
                 >
                   Export
                 </Elem>
-                <Elem
-                  tag={Button}
-                  name="finish"
-                  look="secondary"
-                  onClick={saveToCeramic}
-                  waiting={downloading}
-                >
-                  Save to Ceramic
-                </Elem>
+                {hasSession && (
+                  <Elem
+                    tag={Button}
+                    name="finish"
+                    look="secondary"
+                    onClick={saveToCeramic}
+                    waiting={downloading}
+                  >
+                    Save to Ceramic
+                  </Elem>
+                )}
               </Space>
             </Elem>
           </Space>
