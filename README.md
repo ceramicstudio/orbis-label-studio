@@ -23,6 +23,24 @@ So, what does Ceramic bring to the table? Ceramic is a decentralized data networ
 - Streams preserve the history of edits made, making historical traversal transparent.
 - Finally, given Ceramic’s private data and inter-node synchronization capabilities, marketplaces for labeled data can be built on this infrastructure, enabling dataset producers to allow read access in exchange for monetary value.
 
+### Labeling Guide: Key Components
+
+This demo relies on the following frameworks and providers to support our data labeling flow:
+
+**OrbisDB**
+
+The previous section mentioned that databases can be built on Ceramic’s event streams. [OrbisDB](https://useorbis.com/) is one of those implementations, offering a relational database interface, and features like plugins, a developer UI, and even a shared hosted instance for experimentation. 
+
+Given the highly relational nature of dataset labeling, we will use OrbisDB (and its SDK) to write our labeled datasets to Ceramic.
+
+**Label Studio**
+
+[Label Studio](https://labelstud.io/) is a flexible, open-source data labeling framework that can be used to prepare training data for computer vision, natural language processing (NLP), speech, voice, and video models. This demo will showcase a “Text Classification” use case, a subset of NLP.
+
+**Privy Wallet**
+
+Finally, this demo assumes that many data labelers do not have Ethereum wallets and may opt to log in with a social or email platform instead. Since Privy spins up a wallet for users who log in with social platforms (while also allowing people to authenticate with their wallet if they have one), we can extend Privy to authenticate on Ceramic, create a browser session, and yield a DID to claim ownership to our labeled data.
+
 ## Getting Started
 
 1. We first need to set up our environment. The web application component of this framework is housed in the `web` directory. Go ahead and enter that directory and create a copy of the example environment file:
