@@ -4,6 +4,25 @@ This repository is a forked + altered version of the open-source [Label Studio F
 
 In this example, we show how datasets labeled for sentiment analysis can be piped from the Label Studio framework to OrbisDB. 
 
+## Why Ceramic for Data Labeling?
+
+Teams working on LLM pipelines care about:
+
+- **Quality Assurance**: Being able to easily identify the source of high-quality datasets and potential areas for improvement.
+- **Accountability**: Fostering a sense of ownership and responsibility among team members for the datasets they create.
+- **Collaboration**: Enhancing teamwork by providing clear visibility into each member's contributions.
+- **Auditing and Compliance**: Maintaining a clear record of dataset origins (often necessary for industries with strict regulatory requirements).
+- **Iterative Improvement**: Track the evolution of datasets over time, enabling teams to analyze and refine their labeling processes.
+
+Given these desires, it’s easy to see how tools that provide strong provenance and data lineage characteristics might benefit ML pipeline architects.
+
+So, what does Ceramic bring to the table? Ceramic is a decentralized data network built on verifiable event streams on top of which relational databases, private storage, and event-driven capabilities can be built. A key characteristic of Ceramic is its verifiable data integrity and lineage. Here’s how this relates to data labeling:
+
+- All data (such as labeled datasets) written to Ceramic are “owned” by an account controlled by a sovereign decentralized identifier. These identifiers can be owned by an Ethereum address or instantiated to extend Ed25519 and Secp256k1 public-key pairs.
+- Once records (or “streams”) are created, only the controlling account can continue to make updates to that data (or by granting an application temporary access to make updates on behalf of the controlling account).
+- Streams preserve the history of edits made, making historical traversal transparent.
+- Finally, given Ceramic’s private data and inter-node synchronization capabilities, marketplaces for labeled data can be built on this infrastructure, enabling dataset producers to allow read access in exchange for monetary value.
+
 ## Getting Started
 
 1. We first need to set up our environment. The web application component of this framework is housed in the `web` directory. Go ahead and enter that directory and create a copy of the example environment file:
